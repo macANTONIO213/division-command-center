@@ -1,4 +1,4 @@
-FROM python:3.13-slim
+FROM python:3.13-alpine
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1
@@ -7,8 +7,8 @@ WORKDIR /app
 
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt \
-    && groupadd --gid 10001 appuser \
-    && useradd --uid 10001 --gid appuser --home-dir /app --no-create-home appuser
+    && addgroup -S appuser \
+    && adduser -S -G appuser appuser
 
 COPY --chown=appuser:appuser app.py ./
 COPY --chown=appuser:appuser templates ./templates
