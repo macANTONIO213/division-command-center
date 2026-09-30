@@ -37,7 +37,7 @@ All 15 records are invented examples and are labeled as synthetic in the interfa
 
 - Records are stored in process memory. Status changes disappear after a restart and are not shared across multiple worker processes.
 - There is no authentication, database, external API, or audit history.
-- The Flask development server is for local development only. The AWS prototype uses one Elastic Beanstalk instance and currently serves HTTP without TLS.
+- The Flask development server is for local development only. The AWS prototype deployment used one Elastic Beanstalk instance and was removed after testing.
 - The user and workflow assumptions above have not been validated with stakeholders.
 
 ## Deferred capabilities
@@ -55,10 +55,6 @@ python app.py
 
 Open <http://127.0.0.1:5000/>.
 
-## AWS prototype deployment
+## AWS deployment status
 
-The prototype is running in AWS Elastic Beanstalk in `ap-southeast-1` as environment `division-command-center-prototype`:
-
-<http://division-command-center-719535286257.ap-southeast-1.elasticbeanstalk.com/>
-
-The `Procfile` runs one Gunicorn worker so in-memory status changes remain consistent within the instance. Changes still disappear after an instance restart or replacement. The single EC2 instance incurs AWS charges while the environment runs.
+The test environment `division-command-center-prototype` in `ap-southeast-1` was deprovisioned after testing. The `Procfile` remains available for a future WSGI deployment. In-memory status changes disappear after any process restart or replacement.
