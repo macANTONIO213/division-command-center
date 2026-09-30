@@ -63,6 +63,11 @@ def index():
     )
 
 
+@app.get("/health")
+def health():
+    return {"status": "ok"}
+
+
 @app.post("/records/<int:record_id>/status")
 def update_status(record_id):
     record = next((item for item in RECORDS if item["id"] == record_id), None)

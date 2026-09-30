@@ -19,7 +19,7 @@ Division status is often spread across separate reports and conversations. That 
 
 ## Acceptance checks
 
-- The project contains `app.py`, `Procfile`, `requirements.txt`, `README.md`, `templates/index.html`, `templates/error.html`, `static/styles.css`, and `.gitignore`.
+- The project contains `app.py`, `Dockerfile`, `Procfile`, `requirements.txt`, `README.md`, `templates/index.html`, `templates/error.html`, `static/styles.css`, and `.gitignore`.
 - After installing dependencies, `python app.py` starts the local Flask development server.
 - Opening `/` renders the dashboard from `templates/index.html` and loads `static/styles.css`.
 - The dashboard contains exactly 15 synthetic records across six divisions.
@@ -27,6 +27,8 @@ Division status is often spread across separate reports and conversations. That 
 - Search checks record title, division, and summary without regard to letter case. Division and status filters can be combined with search.
 - Saving a valid status updates the in-memory record and recalculates the KPIs. Invalid record IDs return 404; invalid statuses return 400.
 - A visible prototype and synthetic-data warning appears on the dashboard and HTTP error pages, including after filtering or saving.
+- `GET /health` returns HTTP 200 with `{"status":"ok"}`.
+- The container installs Gunicorn, exposes port 8000, and runs as a non-root user with one worker.
 - The Flask `app` object is importable by a WSGI runtime; the `Procfile` starts one Gunicorn worker on Elastic Beanstalk. Local launch accepts `HOST` and `PORT` environment variables.
 
 ## Synthetic-data boundary
@@ -54,6 +56,15 @@ python app.py
 ```
 
 Open <http://127.0.0.1:5000/>.
+
+## Run in a container
+
+```sh
+docker build -t division-command-center .
+docker run --rm -p 8000:8000 division-command-center
+```
+
+Open <http://127.0.0.1:8000/>. The health endpoint is <http://127.0.0.1:8000/health>.
 
 ## AWS deployment status
 
