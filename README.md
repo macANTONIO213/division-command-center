@@ -19,7 +19,7 @@ Division status is often spread across separate reports and conversations. That 
 
 ## Acceptance checks
 
-- The project contains `app.py`, `requirements.txt`, `README.md`, `templates/index.html`, `templates/error.html`, `static/styles.css`, and `.gitignore`.
+- The project contains `app.py`, `Procfile`, `requirements.txt`, `README.md`, `templates/index.html`, `templates/error.html`, `static/styles.css`, and `.gitignore`.
 - After installing dependencies, `python app.py` starts the local Flask development server.
 - Opening `/` renders the dashboard from `templates/index.html` and loads `static/styles.css`.
 - The dashboard contains exactly 15 synthetic records across six divisions.
@@ -27,7 +27,7 @@ Division status is often spread across separate reports and conversations. That 
 - Search checks record title, division, and summary without regard to letter case. Division and status filters can be combined with search.
 - Saving a valid status updates the in-memory record and recalculates the KPIs. Invalid record IDs return 404; invalid statuses return 400.
 - A visible prototype and synthetic-data warning appears on the dashboard and HTTP error pages, including after filtering or saving.
-- The Flask `app` object is importable by a prepared WSGI runtime; local launch accepts `HOST` and `PORT` environment variables.
+- The Flask `app` object is importable by a WSGI runtime; the `Procfile` starts one Gunicorn worker on Elastic Beanstalk. Local launch accepts `HOST` and `PORT` environment variables.
 
 ## Synthetic-data boundary
 
@@ -37,12 +37,12 @@ All 15 records are invented examples and are labeled as synthetic in the interfa
 
 - Records are stored in process memory. Status changes disappear after a restart and are not shared across multiple worker processes.
 - There is no authentication, database, external API, or audit history.
-- The Flask development server is for local development only.
+- The Flask development server is for local development only. The AWS prototype uses one Elastic Beanstalk instance and currently serves HTTP without TLS.
 - The user and workflow assumptions above have not been validated with stakeholders.
 
 ## Deferred capabilities
 
-Drill-down views, follow-up tracking, role-based access, data ingestion, and deployment are deferred until requirements and data definitions are agreed.
+Drill-down views, follow-up tracking, role-based access, data ingestion, and production deployment controls are deferred until requirements and data definitions are agreed.
 
 ## Run locally
 
@@ -55,4 +55,10 @@ python app.py
 
 Open <http://127.0.0.1:5000/>.
 
-For a prepared AWS WSGI runtime, point its application setting at `app:app` from the project directory. The runtime must supply its own WSGI server. If launching with `python app.py` in a prepared environment, set `HOST=0.0.0.0` and the assigned `PORT`. Keep one worker process if status changes need to appear consistently during a demo.
+## AWS prototype deployment
+
+The prototype is running in AWS Elastic Beanstalk in `ap-southeast-1` as environment `division-command-center-prototype`:
+
+<http://division-command-center-719535286257.ap-southeast-1.elasticbeanstalk.com/>
+
+The `Procfile` runs one Gunicorn worker so in-memory status changes remain consistent within the instance. Changes still disappear after an instance restart or replacement. The single EC2 instance incurs AWS charges while the environment runs.
