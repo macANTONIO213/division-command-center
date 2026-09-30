@@ -1,0 +1,17 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{{ code }} · Division Operations Command Center</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+  </head>
+  <body>
+    <div class="warning" role="status">Prototype · All records are synthetic. Changes are kept in memory and reset when the app restarts.</div>
+    <main class="page">
+      <h1>{{ code }}</h1>
+      <p>{{ message }}</p>
+      <a href="{{ url_for('index') }}">Return to Command Center</a>
+    </main>
+  </body>
+</html>
