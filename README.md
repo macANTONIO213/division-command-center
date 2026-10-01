@@ -39,7 +39,7 @@ All 15 records are invented examples and are labeled as synthetic in the interfa
 
 - Records are stored in process memory. Status changes disappear after a restart and are not shared across multiple worker processes.
 - There is no authentication, database, external API, or audit history.
-- The Flask development server is for local development only. The AWS prototype deployment used one Elastic Beanstalk instance and was removed after testing.
+- The Flask development server is for local development only. The current AWS prototype runs one Docker instance behind an Application Load Balancer and serves HTTP without TLS.
 - The user and workflow assumptions above have not been validated with stakeholders.
 
 ## Deferred capabilities
@@ -68,4 +68,8 @@ Open <http://127.0.0.1:8000/>. The health endpoint is <http://127.0.0.1:8000/hea
 
 ## AWS deployment status
 
-The test environment `division-command-center-prototype` in `ap-southeast-1` was deprovisioned after testing. The `Procfile` remains available for a future WSGI deployment. In-memory status changes disappear after any process restart or replacement.
+The prototype is running in Elastic Beanstalk's Docker platform in `ap-southeast-1` as environment `division-command-center-prototype`:
+
+<http://division-command-center-719535286257.ap-southeast-1.elasticbeanstalk.com/>
+
+The load balancer checks `/health`. The deployed source is commit `6089ee7` (`6089ee7-docker` application version). The environment uses one instance and an Application Load Balancer, which incur AWS charges while running. In-memory status changes disappear after an instance restart or replacement. The `Procfile` remains for a separate WSGI deployment path.
