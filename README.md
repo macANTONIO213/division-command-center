@@ -1,75 +1,91 @@
-# Division Command Center
-
-A Flask prototype for reviewing synthetic division work and updating record statuses. It has no external data source or persistent storage.
+# Division Command Center prototype
 
 ## User
+A division leader or operations colleague reviewing work across divisions in a synthetic prototype.
 
-The intended user is a division leader or operations manager who needs one place to review the division's status and decide what needs attention. This is a working assumption for the prototype, to be validated before dashboard design begins.
-
-## Business problem
-
-Division status is often spread across separate reports and conversations. That makes it hard to see priorities and follow up consistently. A future command center should bring the relevant signals and actions into one understandable view.
+## Problem
+The team needs a single view of operations records, their status, and summary counts without connecting real business systems.
 
 ## Core journey
-
-1. Open the command center and review four KPI counts.
-2. Search the records or filter by division and status.
-3. Review a record's title, summary, division, and status.
-4. Select a new status and save; the page reloads with recalculated KPI counts.
+1. Set up the Python environment in this folder.
+2. Start Flask locally.
+3. Open http://127.0.0.1:5000/ and review 15 invented records across six divisions.
+4. Search by ID, title, division, or status; combine division and status filters and apply them.
+5. Select a record's new status and press Save. The page reloads with the current filters preserved and Python recalculates the KPIs. A record can leave the current results if its new status no longer matches the filters.
+6. Clear filters to return to all records. Review the uncommitted files with Git.
 
 ## Acceptance checks
-
-- The project contains `app.py`, `Dockerfile`, `Procfile`, `requirements.txt`, `README.md`, `templates/index.html`, `templates/error.html`, `static/styles.css`, and `.gitignore`.
-- After installing dependencies, `python app.py` starts the local Flask development server.
-- Opening `/` renders the dashboard from `templates/index.html` and loads `static/styles.css`.
-- The dashboard contains exactly 15 synthetic records across six divisions.
-- Python calculates four KPI cards from the currently displayed records: visible records, on track, needs attention (at risk or blocked), and complete.
-- Search checks record title, division, and summary without regard to letter case. Division and status filters can be combined with search.
-- Saving a valid status updates the in-memory record and recalculates the KPIs. Invalid record IDs return 404; invalid statuses return 400.
-- A visible prototype and synthetic-data warning appears on the dashboard and HTTP error pages, including after filtering or saving.
-- `GET /health` returns HTTP 200 with `{"status":"ok"}`.
-- The container installs Gunicorn, exposes port 8000, and runs as a non-root user with one worker.
-- The Flask `app` object is importable by a WSGI runtime; the `Procfile` starts one Gunicorn worker on Elastic Beanstalk. Local launch accepts `HOST` and `PORT` environment variables.
+- The project includes the Flask app, templates, stylesheet, requirements, README, AGENTS, tests, and `.gitignore`, plus the existing `Dockerfile` and `Procfile` runtime files.
+- The root route renders `index.html` with 15 synthetic records across six divisions and a visible prototype warning. Error pages also retain the warning.
+- Python calculates four KPI cards for the current results: total records, Open, In progress, and Completed. Initial unfiltered counts are 15, 5, 5, and 5 respectively.
+- Search is case-insensitive; division and status filters combine with search. No matches produces an empty state with four zero KPIs.
+- Valid status updates use POST, persist in this process, and redirect to recalculated results. Invalid status or filter values return 400 without mutation; a missing record returns 404.
+- The root route returns HTTP 200 and loads the local stylesheet.
+- `GET /health` returns HTTP 200 with `{"status":"ok"}` for the existing load-balancer check.
+- Flask starts bound to localhost by default, with debug mode disabled. Existing `HOST` and `PORT` overrides are supported.
+- `.venv`, `.env`, caches, and common secret files are ignored by Git.
+- Git review excludes local environments, caches, and secrets. Commit or push only when explicitly requested.
+- Records stay in memory. No database, authentication, external APIs, secrets, or real business data are added.
 
 ## Synthetic-data boundary
+All 15 records and division assignments are invented demonstration data, clearly labeled synthetic. They contain no real customer, employee, financial, confidential, or operational records. Do not add credentials, tokens, or secrets to source files or Git.
 
-All 15 records are invented examples and are labeled as synthetic in the interface. Do not copy production records, personal information, credentials, or confidential division details into the project.
-
-## Prototype limitations
-
-- Records are stored in process memory. Status changes disappear after a restart and are not shared across multiple worker processes.
-- There is no authentication, database, external API, or audit history.
-- The Flask development server is for local development only. The current AWS prototype runs one Docker instance behind an Application Load Balancer and serves HTTP without TLS.
-- The user and workflow assumptions above have not been validated with stakeholders.
-
-## Deferred capabilities
-
-Drill-down views, follow-up tracking, role-based access, data ingestion, and production deployment controls are deferred until requirements and data definitions are agreed.
-
-## Run locally
+## Windows PowerShell commands
+Run commands from the `division-command-center` folder. Python 3.10 or newer is required. Creating the local environment is a filesystem operation; dependency installation requires approved network/package access. If access is denied, stop the installation and report it.
 
 ```powershell
 python -m venv .venv
-.venv\Scripts\Activate.ps1
-python -m pip install -r requirements.txt
-python app.py
+.\.venv\Scripts\python.exe -m pip install -r requirements.txt
+.\.venv\Scripts\python.exe app.py
 ```
 
-Open <http://127.0.0.1:5000/>.
+Open http://127.0.0.1:5000/ in a browser. Press Ctrl+C in the server terminal to stop it. Using the environment's executable directly avoids changing PowerShell's execution policy.
 
-## Run in a container
+With the server running, check it from a second PowerShell terminal:
 
-```sh
+```powershell
+(Invoke-WebRequest -Uri http://127.0.0.1:5000/ -UseBasicParsing).StatusCode
+(Invoke-WebRequest -Uri http://127.0.0.1:5000/static/styles.css -UseBasicParsing).StatusCode
+```
+
+Both commands should print `200`.
+
+Run the available automated checks:
+
+```powershell
+.\.venv\Scripts\python.exe -m unittest discover -s tests -v
+.\.venv\Scripts\python.exe -m pip check
+```
+
+The standard-library tests use Flask's test client and restore in-memory records after each test. They cover the synthetic dataset, KPI counts, combined filters, empty results, escaped input, status updates, filter preservation, rejected requests, error warnings, and the stylesheet.
+
+Initialize and review Git without committing:
+
+```powershell
+git status --short
+git diff
+```
+
+Untracked files do not appear in ordinary `git diff`. Use `git diff --no-index -- NUL path` to review a new file; it returns 1 when differences exist. Commit or push only when explicitly requested.
+
+## Limitations
+This is an unauthenticated synthetic prototype. Flask's development server is unsuitable for production. Updates reset on process restart and are not shared across separate workers or instances. A process-local lock prevents simultaneous reads and writes from producing partial snapshots; it does not synchronize AWS workers. There is no durable persistence or concurrent-edit conflict handling. No JavaScript is needed: native HTML forms submit filters and updates. Dependencies are bounded by major version rather than captured in a full reproducible lockfile.
+
+## Runtime compatibility
+The existing importable WSGI entry point remains `app:app`. The existing Dockerfile uses Python 3.13 Alpine, a non-root user, and one Gunicorn worker on port 8000. The Procfile retains the same one-worker WSGI entry point. Gunicorn is installed on non-Windows platforms; Windows uses the local Flask development server. Direct launch defaults to localhost:5000 with debug disabled and supports the existing `HOST`/`PORT` overrides. The application uses standard Flask/Jinja and Python, with no Windows-specific application code.
+
+The remote repository already includes an AWS runtime and `/health` contract. Those are preserved. Docker execution and AWS deployment of this update have not been verified.
+
+## Existing container and AWS setup
+
+```powershell
 docker build -t division-command-center .
 docker run --rm -p 8000:8000 division-command-center
 ```
 
-Open <http://127.0.0.1:8000/>. The health endpoint is <http://127.0.0.1:8000/health>.
+Open http://127.0.0.1:8000/ and check http://127.0.0.1:8000/health.
 
-## AWS deployment status
+The repository's previous README records an Elastic Beanstalk Docker environment in `ap-southeast-1`, named `division-command-center-prototype`, with one instance and an Application Load Balancer checking `/health`. It records commit `6089ee7` as application version `6089ee7-docker`. This is historical repository information, not a live deployment verification. Pushing to GitHub does not itself verify or perform an AWS deployment.
 
-The prototype is running in Elastic Beanstalk's Docker platform in `ap-southeast-1` as environment `division-command-center-prototype`:
-
-<http://division-command-center-719535286257.ap-southeast-1.elasticbeanstalk.com/>
-
-The load balancer checks `/health`. The deployed source is commit `6089ee7` (`6089ee7-docker` application version). The environment uses one instance and an Application Load Balancer, which incur AWS charges while running. In-memory status changes disappear after an instance restart or replacement. The `Procfile` remains for a separate WSGI deployment path.
+## Deferred capabilities
+Charts, additional KPIs, workflows, uploads, exports, APIs, live data integrations, user accounts, database storage, production hosting, and deployment remain deferred until separately requested.

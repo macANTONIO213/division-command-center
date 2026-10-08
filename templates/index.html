@@ -7,63 +7,99 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
   </head>
   <body>
-    <div class="warning" role="status">Prototype · All records are synthetic. Changes are kept in memory and reset when the app restarts.</div>
-    <main class="page">
+    <aside class="prototype-warning" aria-label="Prototype warning">
+      <strong>Prototype — synthetic data only.</strong>
+      No live business data. Changes are held in memory and reset on restart.
+    </aside>
+    <main>
       <header>
         <p class="eyebrow">Division operations</p>
-        <h1>Command Center</h1>
-        <p>Review work across six divisions and update its status.</p>
+        <h1>Division Operations Command Center</h1>
+        <p class="muted">Review synthetic work across six divisions and update its status.</p>
       </header>
-
-      <section aria-labelledby="overview-title">
-        <div class="section-heading"><h2 id="overview-title">Overview</h2><p>Counts reflect the current search and filters.</p></div>
-        <div class="kpis">
-          <article><span>Visible records</span><strong>{{ kpis.total }}</strong></article>
-          <article><span>On track</span><strong>{{ kpis.on_track }}</strong></article>
-          <article><span>Needs attention</span><strong>{{ kpis.needs_attention }}</strong></article>
-          <article><span>Complete</span><strong>{{ kpis.complete }}</strong></article>
-        </div>
+      {% if error %}
+      <section class="panel" role="alert">
+        <h2>{{ error.code }} — {{ error.name }}</h2>
+        <p>{{ error.description }}</p>
+        <a href="{{ url_for('index') }}">Return to command center</a>
       </section>
-
-      <section aria-labelledby="records-title">
-        <div class="section-heading"><h2 id="records-title">Division records</h2><p>{{ records|length }} shown</p></div>
-        <form class="filters" method="get" action="{{ url_for('index') }}" role="search">
-          <label>Search <input type="search" name="q" value="{{ query }}" placeholder="Title, division, or summary"></label>
-          <label>Division <select name="division">
-            <option value="">All divisions</option>
-            {% for option in divisions %}<option value="{{ option }}"{% if option == division %} selected{% endif %}>{{ option }}</option>{% endfor %}
-          </select></label>
-          <label>Status <select name="status">
-            <option value="">All statuses</option>
-            {% for option in statuses %}<option value="{{ option }}"{% if option == status %} selected{% endif %}>{{ option }}</option>{% endfor %}
-          </select></label>
+      {% else %}
+      <section class="kpis" aria-label="Key performance indicators for current results">
+        {% for label, value in kpis %}
+        <article class="kpi">
+          <h2>{{ label }}</h2>
+          <p>{{ value }}</p>
+        </article>
+        {% endfor %}
+      </section>
+      <p class="muted">KPIs reflect the current search and filters.</p>
+      <section class="panel" aria-labelledby="records-heading">
+        <h2 id="records-heading">Synthetic operations records</h2>
+        <form class="filters" method="get" action="{{ url_for('index') }}">
+          <div class="search-field">
+            <label for="q">Search records</label>
+            <input id="q" name="q" type="search" value="{{ filters.q }}" placeholder="ID, title, division, or status">
+          </div>
+          <div>
+            <label for="division">Division</label>
+            <select id="division" name="division">
+              <option value="">All divisions</option>
+              {% for division in divisions %}
+              <option value="{{ division }}" {% if filters.division == division %}selected{% endif %}>{{ division }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div>
+            <label for="status">Status</label>
+            <select id="status" name="status">
+              <option value="">All statuses</option>
+              {% for status in statuses %}
+              <option value="{{ status }}" {% if filters.status == status %}selected{% endif %}>{{ status }}</option>
+              {% endfor %}
+            </select>
+          </div>
           <button type="submit">Apply filters</button>
-          <a href="{{ url_for('index') }}">Clear</a>
+          <a href="{{ url_for('index') }}">Clear filters</a>
         </form>
-
+        <p class="muted" role="status">Showing {{ records|length }} of {{ total_records }} synthetic records.</p>
         {% if records %}
-        <div class="table-wrap"><table>
-          <thead><tr><th scope="col">Record</th><th scope="col">Division</th><th scope="col">Status</th><th scope="col">Update status</th></tr></thead>
-          <tbody>{% for record in records %}
-            <tr>
-              <td><strong>{{ record.title }}</strong><small>{{ record.summary }}</small></td>
-              <td>{{ record.division }}</td>
-              <td><span class="status status-{{ record.status|lower|replace(' ', '-') }}">{{ record.status }}</span></td>
-              <td><form class="update" method="post" action="{{ url_for('update_status', record_id=record.id) }}">
-                <input type="hidden" name="q" value="{{ query }}">
-                <input type="hidden" name="division" value="{{ division }}">
-                <input type="hidden" name="status" value="{{ status }}">
-                <label class="sr-only" for="status-{{ record.id }}">New status for {{ record.title }}</label>
-                <select id="status-{{ record.id }}" name="new_status">
-                  {% for option in statuses %}<option value="{{ option }}"{% if option == record.status %} selected{% endif %}>{{ option }}</option>{% endfor %}
-                </select>
-                <button type="submit">Save</button>
-              </form></td>
-            </tr>
-          {% endfor %}</tbody>
-        </table></div>
-        {% else %}<p class="empty">No records match these filters.</p>{% endif %}
+        <div class="table-wrap" tabindex="0" role="region" aria-label="Operations records table">
+          <table>
+            <caption class="sr-only">Filtered synthetic records with status update forms</caption>
+            <thead>
+              <tr><th scope="col">ID</th><th scope="col">Record</th><th scope="col">Division</th><th scope="col">Status</th><th scope="col">Update status</th></tr>
+            </thead>
+            <tbody>
+              {% for record in records %}
+              <tr>
+                <td>{{ record.id }}</td>
+                <th scope="row">{{ record.title }}</th>
+                <td>{{ record.division }}</td>
+                <td><span class="badge {{ record.status|lower|replace(' ', '-') }}">{{ record.status }}</span></td>
+                <td>
+                  <form class="status-form" method="post" action="{{ url_for('update_status', record_id=record.id) }}">
+                    {% for key, value in filters.items() %}
+                    <input type="hidden" name="{{ key }}" value="{{ value }}">
+                    {% endfor %}
+                    <label class="sr-only" for="record-status-{{ record.id }}">New status for {{ record.title }}</label>
+                    <select id="record-status-{{ record.id }}" name="new_status">
+                      {% for status in statuses %}
+                      <option value="{{ status }}" {% if record.status == status %}selected{% endif %}>{{ status }}</option>
+                      {% endfor %}
+                    </select>
+                    <button type="submit" aria-label="Save status for {{ record.title }}">Save</button>
+                  </form>
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+        {% else %}
+        <p class="empty">No records match your search and filters. Change the criteria or clear filters.</p>
+        {% endif %}
       </section>
+      {% endif %}
     </main>
   </body>
 </html>
